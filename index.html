@@ -9,6 +9,7 @@
 
     <!-- Importazione della libreria -->
     <script src="https://unpkg.com/qr-scanner@1.4.1/qr-scanner.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         body {
@@ -26,12 +27,44 @@
             background-color: green;
             color: white;
             border: none;
-            border-radius: 5px;
-            width: 100px;
+            border-radius: 25px;
+            width: 130px;
             height: 100px;
             display: flex;
             justify-content: center;
             align-items: center;
+            text-align: center;
+            font-weight: bold;
+        }
+        #menu {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .menu-button {
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .menu-button:hover {
+            opacity: 0.8;
+        }
+        #resetButton { background-color: red; color: white; }
+        #exportExcelButton { background-color: blue; color: white; }
+        #showAllButton { background-color: orange; color: white; }
+        #searchContainer {
+            margin-top: 10px;
+        }
+        #searchInput {
+            padding: 8px;
+            width: 200px;
+            border-radius: 15px;
+            border: 1px solid #ccc;
             text-align: center;
         }
         #cameraFeed {
@@ -40,23 +73,6 @@
             max-width: 400px;
             margin-top: 10px;
         }
-        .notification {
-            display: none;
-            margin: 10px auto;
-            padding: 10px;
-            font-size: 16px;
-            color: white;
-            border-radius: 5px;
-            max-width: 80%;
-            text-align: center;
-        }
-        .success {
-            background-color: green;
-        }
-        .error {
-            background-color: red;
-        }
-        /* Stile per la lista ospiti */
         #guestList {
             background-color: white;
             color: black;
@@ -76,25 +92,6 @@
             border-bottom: 1px solid #ddd;
             font-size: 14px;
         }
-        .guest:last-child {
-            border-bottom: none;
-        }
-        .guest-info {
-            display: flex;
-            align-items: center;
-            flex: 1;
-            text-align: left;
-        }
-        .guest-time {
-            font-weight: bold;
-            font-size: 12px;
-            color: #555;
-            margin-right: 10px;
-            min-width: 80px;
-        }
-        .guest-text {
-            font-size: 14px;
-        }
         .delete-button {
             background-color: red;
             color: white;
@@ -106,7 +103,6 @@
             cursor: pointer;
             text-align: center;
             line-height: 22px;
-            margin-left: 10px;
         }
     </style>
 </head>
@@ -115,137 +111,85 @@
     <h2>Scansiona Tessere IKEA Family</h2>
 
     <button id="toggleCameraButton">Scan QR-Code</button>
+
+    <!-- Menu con pulsanti -->
+    <div id="menu">
+        <button id="resetButton" class="menu-button">Reset</button>
+        <button id="exportExcelButton" class="menu-button">Report Excel</button>
+        <button id="showAllButton" class="menu-button">Mostra Tutti</button>
+    </div>
+
+    <!-- Ricerca -->
+    <div id="searchContainer">
+        <input type="text" id="searchInput" placeholder="Cerca Tessera">
+    </div>
+
     <video id="cameraFeed" autoplay playsinline></video>
-
-    <div id="notification" class="notification"></div>
-
     <div id="guestList"></div>
 
     <script>
-        window.addEventListener('load', function () {
-            const toggleCameraButton = document.getElementById('toggleCameraButton');
-            const cameraFeed = document.getElementById('cameraFeed');
-            const notificationDiv = document.getElementById('notification');
-            const guestListContainer = document.getElementById('guestList');
+        const toggleCameraButton = document.getElementById('toggleCameraButton');
+        const guestListContainer = document.getElementById('guestList');
+        let guestList = JSON.parse(localStorage.getItem('guestList')) || [];
 
-            let videoStream = null;
-            let qrScanner = null;
-            let guestList = JSON.parse(localStorage.getItem('guestList')) || [];
-
-            const successSound = new Audio("https://static.wixstatic.com/mp3/2080b2_76667a9eefe946fda6bdfc5bc56988e1.mp3");
-            const errorSound = new Audio("https://static.wixstatic.com/mp3/2080b2_519ca0fcc6764f71a29f6cefbeb9e0b3.mp3");
-
-            toggleCameraButton.addEventListener('click', function () {
-                if (videoStream) {
-                    stopCamera();
-                } else {
-                    startCamera();
-                }
-            });
-
-            async function startCamera() {
-                try {
-                    const constraints = {
-                        video: { facingMode: "environment" }
-                    };
-
-                    videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    cameraFeed.srcObject = videoStream;
-                    cameraFeed.style.display = "block";
-                    toggleCameraButton.textContent = "Disattiva";
-
-                    qrScanner = new QrScanner(
-                        cameraFeed,
-                        result => handleScan(result),
-                        { highlightScanRegion: true, highlightCodeOutline: true }
-                    );
-                    qrScanner.start();
-                } catch (error) {
-                    alert("Errore nell'attivazione della fotocamera: " + error.message);
-                }
-            }
-
-            function stopCamera() {
-                if (videoStream) {
-                    videoStream.getTracks().forEach(track => track.stop());
-                    videoStream = null;
-                }
-                if (qrScanner) {
-                    qrScanner.stop();
-                    qrScanner.destroy();
-                    qrScanner = null;
-                }
-                cameraFeed.style.display = "none";
-                toggleCameraButton.textContent = "Scan QR-Code";
-            }
-
-            function handleScan(result) {
-                let scannedText = result.data ? String(result.data).trim() : String(result).trim();
-                if (!scannedText) return;
-
-                stopCamera();  
-                addScannedCode(scannedText);
-            }
-
-            function addScannedCode(scannedText) {
-                if (!scannedText) return;
-
-                const existingGuest = guestList.find(guest => guest.text === scannedText);
-                if (existingGuest) {
-                    showNotification("⚠️ Tessera già registrata", scannedText, "error");
-                    errorSound.play();
-                    return;
-                }
-
-                const now = new Date();
-                const guestItem = {
-                    text: scannedText,
-                    time: now.toLocaleTimeString()
-                };
-
-                guestList.unshift(guestItem);
+        // Funzione per resettare la lista
+        document.getElementById('resetButton').addEventListener('click', function () {
+            if (confirm("Sei sicuro di cancellare tutti i dati?")) {
+                guestList = [];
                 localStorage.setItem('guestList', JSON.stringify(guestList));
                 updateGuestList();
+            }
+        });
 
-                showNotification("✅ Tessera registrata con successo", scannedText, "success");
-                successSound.play();
+        // Funzione per esportare la lista in Excel
+        document.getElementById('exportExcelButton').addEventListener('click', function () {
+            if (guestList.length === 0) {
+                alert("Nessun dato da esportare.");
+                return;
             }
 
-            function showNotification(message, qrText, type) {
-                notificationDiv.textContent = `${message}\n${qrText}`;
-                notificationDiv.className = `notification ${type}`;
-                notificationDiv.style.display = "block";
-                setTimeout(() => {
-                    notificationDiv.style.display = "none";
-                }, 3000);
-            }
+            let ws = XLSX.utils.json_to_sheet(guestList);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Guests");
+            XLSX.writeFile(wb, "Report_Ospiti.xlsx");
+        });
 
-            function updateGuestList() {
-                guestListContainer.innerHTML = '';
-                guestList.forEach((guest, index) => {
-                    const guestItemElement = document.createElement('div');
-                    guestItemElement.classList.add('guest');
-                    guestItemElement.innerHTML = `
-                        <div class="guest-info">
-                            <span class="guest-time">${guest.time}</span>
-                            <span class="guest-text">${guest.text}</span>
-                        </div>
-                        <button class="delete-button" onclick="removeGuest(${index})">X</button>
-                    `;
-                    guestListContainer.appendChild(guestItemElement);
-                });
-            }
-
-            window.removeGuest = function(index) {
-                if (confirm("Sei sicuro di eliminare?")) {
-                    guestList.splice(index, 1);
-                    localStorage.setItem('guestList', JSON.stringify(guestList));
-                    updateGuestList();
-                }
-            };
-
+        // Mostra tutti gli elementi
+        document.getElementById('showAllButton').addEventListener('click', function () {
             updateGuestList();
         });
+
+        // Funzione di ricerca
+        document.getElementById('searchInput').addEventListener('input', function () {
+            let query = this.value.toLowerCase();
+            let filteredList = guestList.filter(guest => guest.text.toLowerCase().includes(query));
+            updateGuestList(filteredList);
+        });
+
+        function updateGuestList(filteredData = guestList) {
+            guestListContainer.innerHTML = '';
+            filteredData.forEach((guest, index) => {
+                const guestItemElement = document.createElement('div');
+                guestItemElement.classList.add('guest');
+                guestItemElement.innerHTML = `
+                    <div>
+                        <span><strong>${guest.time}</strong> - ${guest.text}</span>
+                    </div>
+                    <button class="delete-button" onclick="removeGuest(${index})">X</button>
+                `;
+                guestListContainer.appendChild(guestItemElement);
+            });
+        }
+
+        function removeGuest(index) {
+            if (confirm("Sei sicuro di eliminare?")) {
+                guestList.splice(index, 1);
+                localStorage.setItem('guestList', JSON.stringify(guestList));
+                updateGuestList();
+            }
+        }
+
+        updateGuestList();
     </script>
 </body>
 </html>
