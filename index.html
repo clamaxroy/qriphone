@@ -18,22 +18,22 @@
             color: #fedb02;
             padding: 20px;
         }
-   #toggleCameraButton {
-    margin: 10px auto;
-    padding: 0;
-    font-size: 14px;
-    cursor: pointer;
-    background-color: green;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    width: 100px;  /* Larghezza uguale all'altezza per renderlo quadrato */
-    height: 100px; /* Altezza uguale alla larghezza */
-    display: flex; /* Per allineare il testo al centro */
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
+        #toggleCameraButton {
+            margin: 10px auto;
+            padding: 0;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: green;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
         #cameraFeed {
             display: none;
             width: 100%;
@@ -132,8 +132,8 @@
             let qrScanner = null;
             let guestList = JSON.parse(localStorage.getItem('guestList')) || [];
 
-            const successSound = new Audio("https://static.wixstatic.com/mp3/2080b2_76667a9eefe946fda6bdfc5bc56988e1.mp3"); // Suono di conferma
-            const errorSound = new Audio("https://static.wixstatic.com/mp3/2080b2_519ca0fcc6764f71a29f6cefbeb9e0b3.mp3"); // Suono di errore
+            const successSound = new Audio("https://static.wixstatic.com/mp3/2080b2_76667a9eefe946fda6bdfc5bc56988e1.mp3");
+            const errorSound = new Audio("https://static.wixstatic.com/mp3/2080b2_519ca0fcc6764f71a29f6cefbeb9e0b3.mp3");
 
             toggleCameraButton.addEventListener('click', function () {
                 if (videoStream) {
@@ -146,7 +146,7 @@
             async function startCamera() {
                 try {
                     const constraints = {
-                        video: { facingMode: "environment" } // Usa la fotocamera posteriore
+                        video: { facingMode: "environment" }
                     };
 
                     videoStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -237,9 +237,11 @@
             }
 
             window.removeGuest = function(index) {
-                guestList.splice(index, 1);
-                localStorage.setItem('guestList', JSON.stringify(guestList));
-                updateGuestList();
+                if (confirm("Sei sicuro di eliminare?")) {
+                    guestList.splice(index, 1);
+                    localStorage.setItem('guestList', JSON.stringify(guestList));
+                    updateGuestList();
+                }
             };
 
             updateGuestList();
