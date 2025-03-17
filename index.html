@@ -179,7 +179,7 @@
         }
 
         function handleScan(result) {
-            let scannedText = result.data ? String(result.data).trim() : String(result).trim();
+            let scannedText = result ? String(result).trim() : "";
             if (!scannedText) return;
 
             stopCamera();
@@ -235,18 +235,6 @@
                 localStorage.setItem('guestList', JSON.stringify(guestList));
                 updateGuestList();
             }
-        });
-
-        document.getElementById('exportExcelButton').addEventListener('click', function () {
-            if (guestList.length === 0) {
-                alert("Nessun dato da esportare.");
-                return;
-            }
-
-            let ws = XLSX.utils.json_to_sheet(guestList);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Guests");
-            XLSX.writeFile(wb, "Report_Ospiti.xlsx");
         });
 
         document.getElementById('searchInput').addEventListener('input', function () {
