@@ -65,6 +65,21 @@
         .guest {
             padding: 5px;
             border-bottom: 1px solid #ccc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-button {
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            line-height: 18px;
         }
     </style>
 </head>
@@ -181,13 +196,22 @@
 
             function updateGuestList() {
                 guestListContainer.innerHTML = '';
-                guestList.forEach(guest => {
+                guestList.forEach((guest, index) => {
                     const guestItemElement = document.createElement('div');
                     guestItemElement.classList.add('guest');
-                    guestItemElement.innerHTML = `<strong>${guest.time}</strong> - ${guest.text}`;
+                    guestItemElement.innerHTML = `
+                        <span><strong>${guest.time}</strong> - ${guest.text}</span>
+                        <button class="delete-button" onclick="removeGuest(${index})">X</button>
+                    `;
                     guestListContainer.appendChild(guestItemElement);
                 });
             }
+
+            window.removeGuest = function(index) {
+                guestList.splice(index, 1);
+                localStorage.setItem('guestList', JSON.stringify(guestList));
+                updateGuestList();
+            };
 
             updateGuestList();
         });
