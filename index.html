@@ -122,8 +122,8 @@
             }
 
             function handleScan(result) {
-                let scannedText = String(result).trim(); // 🔥 Forza la conversione a stringa
-                if (!scannedText) return;
+    let scannedText = result.data ? String(result.data).trim() : String(result).trim();
+
 
                 stopCamera();  
                 scannedTextField.value = scannedText;
