@@ -50,6 +50,22 @@
         .error {
             background-color: red;
         }
+        /* Stile per la lista ospiti */
+        #guestList {
+            text-align: left;
+            background-color: white;
+            color: black;
+            padding: 10px;
+            margin-top: 20px;
+            max-width: 400px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            display: inline-block;
+        }
+        .guest {
+            padding: 5px;
+            border-bottom: 1px solid #ccc;
+        }
     </style>
 </head>
 <body>
@@ -167,7 +183,8 @@
                 guestListContainer.innerHTML = '';
                 guestList.forEach(guest => {
                     const guestItemElement = document.createElement('div');
-                    guestItemElement.innerHTML = `<span>${guest.time} - ${guest.text}</span>`;
+                    guestItemElement.classList.add('guest');
+                    guestItemElement.innerHTML = `<strong>${guest.time}</strong> - ${guest.text}`;
                     guestListContainer.appendChild(guestItemElement);
                 });
             }
