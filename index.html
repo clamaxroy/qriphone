@@ -51,10 +51,7 @@
         }
         #notification {
             display: none;
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            margin-top: 10px;
             background-color: green;
             color: white;
             padding: 15px;
@@ -69,6 +66,10 @@
 
     <button id="toggleCameraButton">Attiva Fotocamera</button>
     <button id="clearListButton">Cancella Lista</button>
+    
+    <!-- Notifica di conferma sotto il pulsante della fotocamera -->
+    <div id="notification"></div>
+    
     <video id="cameraFeed" autoplay playsinline></video>
     
     <input type="text" id="scannedText" placeholder="Tessera IKEA" readonly>
@@ -77,9 +78,6 @@
 
     <!-- Debug per vedere se i QR vengono rilevati -->
     <div id="debug">DEBUG: Nessun QR rilevato</div>
-
-    <!-- Notifica di conferma -->
-    <div id="notification"></div>
 
     <!-- Audio per il suono di conferma -->
     <audio id="scanSound" src="https://www.myinstants.com/media/sounds/beep.mp3"></audio>
