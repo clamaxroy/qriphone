@@ -60,9 +60,6 @@
 
     <script>
         window.addEventListener('load', function () {
-            // 📌 Imposta il percorso del worker per Safari e iPhone
-            QrScanner.WORKER_PATH = "https://unpkg.com/qr-scanner@1.4.1/qr-scanner-worker.min.js";
-
             const toggleCameraButton = document.getElementById('toggleCameraButton');
             const cameraFeed = document.getElementById('cameraFeed');
             const scannedTextField = document.getElementById('scannedText');
@@ -85,7 +82,7 @@
                 try {
                     const constraints = {
                         video: {
-                            facingMode: { exact: "environment" } // Usa la fotocamera posteriore
+                            facingMode: "environment" // Usa la fotocamera posteriore
                         }
                     };
 
@@ -124,14 +121,16 @@
                 debugDiv.style.display = "none";
             }
 
-            function handleScan(scannedData) {
+            function handleScan(result) {
+                let scannedText = String(result).trim(); // 🔥 Forza la conversione a stringa
+                if (!scannedText) return;
+
                 stopCamera();  
-                scannedTextField.value = scannedData;
-                addScannedCode(scannedData);
+                scannedTextField.value = scannedText;
+                addScannedCode(scannedText);
             }
 
             function addScannedCode(scannedText) {
-                scannedText = scannedText.trim();
                 if (!scannedText) return;
 
                 const existingGuest = guestList.find(guest => guest.text === scannedText);
@@ -173,3 +172,4 @@
     </script>
 </body>
 </html>
+
