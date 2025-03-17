@@ -9,7 +9,6 @@
 
     <!-- Importazione della libreria -->
     <script src="https://unpkg.com/qr-scanner@1.4.1/qr-scanner.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 
     <style>
         body {
@@ -19,17 +18,13 @@
             color: #fedb02;
             padding: 20px;
         }
-        #buttonContainer {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        #toggleCameraButton, #exportExcelButton {
+        #toggleCameraButton {
+            margin: 10px auto;
             padding: 0;
             font-size: 14px;
             cursor: pointer;
+            background-color: green;
+            color: white;
             border: none;
             border-radius: 25px;
             width: 130px;
@@ -38,14 +33,6 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-        }
-        #toggleCameraButton {
-            background-color: green;
-            color: white;
-        }
-        #exportExcelButton {
-            background-color: blue;
-            color: white;
         }
         #cameraFeed {
             display: none;
@@ -69,6 +56,7 @@
         .error {
             background-color: red;
         }
+        /* Stile per la lista ospiti */
         #guestList {
             background-color: white;
             color: black;
@@ -80,25 +68,63 @@
             display: block;
             text-align: left;
         }
+        .guest {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+        .guest:last-child {
+            border-bottom: none;
+        }
+        .guest-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            text-align: left;
+        }
+        .guest-time {
+            font-weight: bold;
+            font-size: 12px;
+            color: #555;
+            margin-right: 10px;
+            min-width: 80px;
+        }
+        .guest-text {
+            font-size: 14px;
+        }
+        .delete-button {
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            line-height: 22px;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
     <h1>IKEA - Fuori Salone</h1>
     <h2>Scansiona Tessere IKEA Family</h2>
 
-    <div id="buttonContainer">
-        <button id="toggleCameraButton">Scan QR-Code</button>
-        <button id="exportExcelButton">Report Excel</button>
-    </div>
-    
+    <button id="toggleCameraButton">Scan QR-Code</button>
+    <button id="exportExcelButton">Report Excel</button>
     <video id="cameraFeed" autoplay playsinline></video>
+
     <div id="notification" class="notification"></div>
+
     <div id="guestList"></div>
 
     <script>
         window.addEventListener('load', function () {
             const toggleCameraButton = document.getElementById('toggleCameraButton');
-            const exportExcelButton = document.getElementById('exportExcelButton');
             const cameraFeed = document.getElementById('cameraFeed');
             const notificationDiv = document.getElementById('notification');
             const guestListContainer = document.getElementById('guestList');
@@ -107,6 +133,9 @@
             let qrScanner = null;
             let guestList = JSON.parse(localStorage.getItem('guestList')) || [];
 
+            const successSound = new Audio("https://static.wixstatic.com/mp3/2080b2_76667a9eefe946fda6bdfc5bc56988e1.mp3");
+            const errorSound = new Audio("https://static.wixstatic.com/mp3/2080b2_519ca0fcc6764f71a29f6cefbeb9e0b3.mp3");
+
             toggleCameraButton.addEventListener('click', function () {
                 if (videoStream) {
                     stopCamera();
@@ -114,6 +143,22 @@
                     startCamera();
                 }
             });
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
+<script>
+    document.getElementById('exportExcelButton').addEventListener('click', function () {
+        if (guestList.length === 0) {
+            alert("Nessun dato da esportare!");
+            return;
+        }
+
+        let wb = XLSX.utils.book_new();
+        let ws = XLSX.utils.json_to_sheet(guestList);
+        XLSX.utils.book_append_sheet(wb, ws, "Guests");
+        XLSX.writeFile(wb, "Guest_Report.xlsx");
+    });
+</script>
+
 
             async function startCamera() {
                 try {
@@ -154,34 +199,67 @@
             function handleScan(result) {
                 let scannedText = result.data ? String(result.data).trim() : String(result).trim();
                 if (!scannedText) return;
+
                 stopCamera();  
                 addScannedCode(scannedText);
             }
 
             function addScannedCode(scannedText) {
                 if (!scannedText) return;
+
+                const existingGuest = guestList.find(guest => guest.text === scannedText);
+                if (existingGuest) {
+                    showNotification("⚠️ Tessera già registrata", scannedText, "error");
+                    errorSound.play();
+                    return;
+                }
+
                 const now = new Date();
-                const guestItem = { text: scannedText, time: now.toLocaleTimeString() };
+                const guestItem = {
+                    text: scannedText,
+                    time: now.toLocaleTimeString()
+                };
+
                 guestList.unshift(guestItem);
                 localStorage.setItem('guestList', JSON.stringify(guestList));
                 updateGuestList();
+
+                showNotification("✅ Tessera registrata con successo", scannedText, "success");
+                successSound.play();
+            }
+
+            function showNotification(message, qrText, type) {
+                notificationDiv.textContent = ${message}\n${qrText};
+                notificationDiv.className = notification ${type};
+                notificationDiv.style.display = "block";
+                setTimeout(() => {
+                    notificationDiv.style.display = "none";
+                }, 3000);
             }
 
             function updateGuestList() {
                 guestListContainer.innerHTML = '';
-                guestList.forEach(guest => {
-                    const div = document.createElement('div');
-                    div.textContent = `${guest.time} - ${guest.text}`;
-                    guestListContainer.appendChild(div);
+                guestList.forEach((guest, index) => {
+                    const guestItemElement = document.createElement('div');
+                    guestItemElement.classList.add('guest');
+                    guestItemElement.innerHTML = 
+                        <div class="guest-info">
+                            <span class="guest-time">${guest.time}</span>
+                            <span class="guest-text">${guest.text}</span>
+                        </div>
+                        <button class="delete-button" onclick="removeGuest(${index})">X</button>
+                    ;
+                    guestListContainer.appendChild(guestItemElement);
                 });
             }
 
-            exportExcelButton.addEventListener('click', function () {
-                let wb = XLSX.utils.book_new();
-                let ws = XLSX.utils.json_to_sheet(guestList);
-                XLSX.utils.book_append_sheet(wb, ws, "Guests");
-                XLSX.writeFile(wb, "Guest_Report.xlsx");
-            });
+            window.removeGuest = function(index) {
+                if (confirm("Sei sicuro di eliminare?")) {
+                    guestList.splice(index, 1);
+                    localStorage.setItem('guestList', JSON.stringify(guestList));
+                    updateGuestList();
+                }
+            };
 
             updateGuestList();
         });
