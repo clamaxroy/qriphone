@@ -143,23 +143,7 @@
                     startCamera();
                 }
             });
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-
-<script>
-    document.getElementById('exportExcelButton').addEventListener('click', function () {
-        if (guestList.length === 0) {
-            alert("Nessun dato da esportare!");
-            return;
-        }
-
-        let wb = XLSX.utils.book_new();
-        let ws = XLSX.utils.json_to_sheet(guestList);
-        XLSX.utils.book_append_sheet(wb, ws, "Guests");
-        XLSX.writeFile(wb, "Guest_Report.xlsx");
-    });
-</script>
-
-
+            
             async function startCamera() {
                 try {
                     const constraints = {
@@ -263,6 +247,22 @@
 
             updateGuestList();
         });
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
+<script>
+    document.getElementById('exportExcelButton').addEventListener('click', function () {
+        if (guestList.length === 0) {
+            alert("Nessun dato da esportare!");
+            return;
+        }
+
+        let wb = XLSX.utils.book_new();
+        let ws = XLSX.utils.json_to_sheet(guestList);
+        XLSX.utils.book_append_sheet(wb, ws, "Guests");
+        XLSX.writeFile(wb, "Guest_Report.xlsx");
+    });
+</script>
+
     </script>
 </body>
 </html>
