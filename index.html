@@ -18,19 +18,22 @@
             color: #fedb02;
             padding: 20px;
         }
-        #toggleCameraButton {
-            margin: 10px auto;
-            padding: 15px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: green;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            display: block;
-            width: 150px;
-            text-align: center;
-        }
+   #toggleCameraButton {
+    margin: 10px auto;
+    padding: 0;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: green;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    width: 100px;  /* Larghezza uguale all'altezza per renderlo quadrato */
+    height: 100px; /* Altezza uguale alla larghezza */
+    display: flex; /* Per allineare il testo al centro */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
         #cameraFeed {
             display: none;
             width: 100%;
