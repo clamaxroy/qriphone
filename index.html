@@ -7,11 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     
-    <!-- Libreria QR Scanner -->
-    <script src="https://unpkg.com/qr-scanner@1.4.1/qr-scanner.min.js"></script>
-    <script>
-        QrScanner.WORKER_PATH = "https://unpkg.com/qr-scanner@1.4.1/qr-scanner-worker.min.js";
-    </script>
+    <!-- 📌 Importazione della libreria -->
+    <script src="https://unpkg.com/qr-scanner@1.4.1/qr-scanner.umd.min.js"></script>
 
     <style>
         body {
@@ -62,7 +59,10 @@
     <div id="debug">DEBUG: Nessun QR rilevato</div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        window.addEventListener('load', function () {
+            // 📌 Imposta il percorso del worker per Safari e iPhone
+            QrScanner.WORKER_PATH = "https://unpkg.com/qr-scanner@1.4.1/qr-scanner-worker.min.js";
+
             const toggleCameraButton = document.getElementById('toggleCameraButton');
             const cameraFeed = document.getElementById('cameraFeed');
             const scannedTextField = document.getElementById('scannedText');
@@ -85,7 +85,7 @@
                 try {
                     const constraints = {
                         video: {
-                            facingMode: { exact: "environment" } // Usa sempre la fotocamera posteriore
+                            facingMode: { exact: "environment" } // Usa la fotocamera posteriore
                         }
                     };
 
@@ -94,7 +94,7 @@
                     cameraFeed.style.display = "block";
                     toggleCameraButton.textContent = "Disattiva Fotocamera";
 
-                    // Inizializza il lettore QR/Barcode
+                    // 🟢 Inizializza il lettore QR/Barcode
                     qrScanner = new QrScanner(
                         cameraFeed,
                         result => handleScan(result),
