@@ -18,49 +18,37 @@
             color: #fedb02;
             padding: 20px;
         }
+        #toggleCameraButton {
+            margin: 10px auto;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: green;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            display: block;
+        }
         #cameraFeed {
             display: none;
             width: 100%;
             max-width: 400px;
             margin-top: 10px;
         }
-        button {
+        .notification {
+            display: none;
             margin: 10px auto;
             padding: 10px;
             font-size: 16px;
-            cursor: pointer;
-            border: 1px solid black;
+            color: white;
             border-radius: 5px;
-            display: block;
-            width: 200px;
+            max-width: 80%;
         }
-        #toggleCameraButton {
+        .success {
             background-color: green;
-            color: white;
         }
-        #debug {
-            margin-top: 20px;
-            font-size: 14px;
-            color: white;
+        .error {
             background-color: red;
-            padding: 10px;
-            display: none;
-        }
-        #guestList div {
-            background: white;
-            color: black;
-            padding: 5px;
-            margin: 5px;
-            border-radius: 5px;
-        }
-        #notification {
-            display: none;
-            margin-top: 10px;
-            background-color: green;
-            color: white;
-            padding: 15px;
-            border-radius: 5px;
-            font-size: 16px;
         }
     </style>
 </head>
@@ -69,32 +57,25 @@
     <h2>Scansiona Tessere IKEA Family</h2>
 
     <button id="toggleCameraButton">Attiva Fotocamera</button>
-    
-    <!-- Notifica di conferma sotto il pulsante della fotocamera -->
-    <div id="notification"></div>
-    
     <video id="cameraFeed" autoplay playsinline></video>
-    
+
+    <div id="notification" class="notification"></div>
+
     <div id="guestList"></div>
-
-    <!-- Debug per vedere se i QR vengono rilevati -->
-    <div id="debug">DEBUG: Nessun QR rilevato</div>
-
-    <!-- Audio per il suono di conferma -->
-    <audio id="scanSound" src="https://www.myinstants.com/media/sounds/beep.mp3"></audio>
 
     <script>
         window.addEventListener('load', function () {
             const toggleCameraButton = document.getElementById('toggleCameraButton');
             const cameraFeed = document.getElementById('cameraFeed');
+            const notificationDiv = document.getElementById('notification');
             const guestListContainer = document.getElementById('guestList');
-            const debugDiv = document.getElementById('debug');
-            const scanSound = document.getElementById('scanSound');
-            const notification = document.getElementById('notification');
 
             let videoStream = null;
             let qrScanner = null;
             let guestList = JSON.parse(localStorage.getItem('guestList')) || [];
+
+            const successSound = new Audio("https://www.myinstants.com/media/sounds/success.mp3"); // Suono di conferma
+            const errorSound = new Audio("https://www.myinstants.com/media/sounds/error.mp3"); // Suono di errore
 
             toggleCameraButton.addEventListener('click', function () {
                 if (videoStream) {
@@ -107,9 +88,7 @@
             async function startCamera() {
                 try {
                     const constraints = {
-                        video: {
-                            facingMode: "environment" // Usa la fotocamera posteriore
-                        }
+                        video: { facingMode: "environment" } // Usa la fotocamera posteriore
                     };
 
                     videoStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -123,9 +102,6 @@
                         { highlightScanRegion: true, highlightCodeOutline: true }
                     );
                     qrScanner.start();
-
-                    debugDiv.style.display = "block";
-                    debugDiv.textContent = "DEBUG: Fotocamera attivata, in attesa di un QR code...";
                 } catch (error) {
                     alert("Errore nell'attivazione della fotocamera: " + error.message);
                 }
@@ -143,7 +119,6 @@
                 }
                 cameraFeed.style.display = "none";
                 toggleCameraButton.textContent = "Attiva Fotocamera";
-                debugDiv.style.display = "none";
             }
 
             function handleScan(result) {
@@ -159,7 +134,8 @@
 
                 const existingGuest = guestList.find(guest => guest.text === scannedText);
                 if (existingGuest) {
-                    alert("⚠️ Tessera già registrata: " + scannedText);
+                    showNotification("⚠️ Tessera già registrata", scannedText, "error");
+                    errorSound.play();
                     return;
                 }
 
@@ -173,16 +149,17 @@
                 guestList.unshift(guestItem);
                 localStorage.setItem('guestList', JSON.stringify(guestList));
                 updateGuestList();
-                
-                scanSound.play();
-                showNotification(scannedText);
+
+                showNotification("✅ Tessera registrata con successo", scannedText, "success");
+                successSound.play();
             }
 
-            function showNotification(text) {
-                notification.innerHTML = `<strong>Tessera registrata con successo</strong><br>${text}`;
-                notification.style.display = 'block';
+            function showNotification(message, qrText, type) {
+                notificationDiv.textContent = `${message}\n${qrText}`;
+                notificationDiv.className = `notification ${type}`;
+                notificationDiv.style.display = "block";
                 setTimeout(() => {
-                    notification.style.display = 'none';
+                    notificationDiv.style.display = "none";
                 }, 3000);
             }
 
