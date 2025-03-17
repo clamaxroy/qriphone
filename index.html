@@ -38,10 +38,6 @@
             background-color: green;
             color: white;
         }
-        #clearListButton {
-            background-color: white;
-            color: black;
-        }
         #debug {
             margin-top: 20px;
             font-size: 14px;
@@ -73,14 +69,11 @@
     <h2>Scansiona Tessere IKEA Family</h2>
 
     <button id="toggleCameraButton">Attiva Fotocamera</button>
-    <button id="clearListButton">Cancella Lista</button>
     
     <!-- Notifica di conferma sotto il pulsante della fotocamera -->
     <div id="notification"></div>
     
     <video id="cameraFeed" autoplay playsinline></video>
-    
-    <input type="text" id="scannedText" placeholder="Tessera IKEA" readonly>
     
     <div id="guestList"></div>
 
@@ -93,9 +86,7 @@
     <script>
         window.addEventListener('load', function () {
             const toggleCameraButton = document.getElementById('toggleCameraButton');
-            const clearListButton = document.getElementById('clearListButton');
             const cameraFeed = document.getElementById('cameraFeed');
-            const scannedTextField = document.getElementById('scannedText');
             const guestListContainer = document.getElementById('guestList');
             const debugDiv = document.getElementById('debug');
             const scanSound = document.getElementById('scanSound');
@@ -111,12 +102,6 @@
                 } else {
                     startCamera();
                 }
-            });
-
-            clearListButton.addEventListener('click', function () {
-                guestList = [];
-                localStorage.removeItem('guestList');
-                updateGuestList();
             });
 
             async function startCamera() {
@@ -166,7 +151,6 @@
                 if (!scannedText) return;
 
                 stopCamera();  
-                scannedTextField.value = scannedText;
                 addScannedCode(scannedText);
             }
 
