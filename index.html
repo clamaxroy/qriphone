@@ -212,8 +212,8 @@
             }
 
             function showNotification(message, qrText, type) {
-                notificationDiv.textContent = ${message}\n${qrText};
-                notificationDiv.className = notification ${type};
+                notificationDiv.textContent = `${message}\n${qrText}`;
+                notificationDiv.className = `notification ${type}`;
                 notificationDiv.style.display = "block";
                 setTimeout(() => {
                     notificationDiv.style.display = "none";
@@ -225,13 +225,13 @@
                 guestList.forEach((guest, index) => {
                     const guestItemElement = document.createElement('div');
                     guestItemElement.classList.add('guest');
-                    guestItemElement.innerHTML = 
+                    guestItemElement.innerHTML = `
                         <div class="guest-info">
                             <span class="guest-time">${guest.time}</span>
                             <span class="guest-text">${guest.text}</span>
                         </div>
                         <button class="delete-button" onclick="removeGuest(${index})">X</button>
-                    ;
+                    `;
                     guestListContainer.appendChild(guestItemElement);
                 });
             }
