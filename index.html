@@ -23,13 +23,12 @@
             padding: 15px;
             font-size: 16px;
             cursor: pointer;
-            background-color: white;
-            color: black;
-            border: 2px solid gray;
-            border-radius: 0px;
+            background-color: green;
+            color: white;
+            border: none;
+            border-radius: 5px;
             display: block;
-            width: 100px;
-            height: 100px;
+            width: 150px;
             text-align: center;
         }
         #cameraFeed {
@@ -83,7 +82,7 @@
             flex: 1;
             text-align: left;
         }
-        .guest-date {
+        .guest-time {
             font-weight: bold;
             font-size: 12px;
             color: #555;
@@ -112,7 +111,7 @@
     <h1>IKEA - Fuori Salone</h1>
     <h2>Scansiona Tessere IKEA Family</h2>
 
-    <button id="toggleCameraButton">📷</button>
+    <button id="toggleCameraButton">Scan QR-Code</button>
     <video id="cameraFeed" autoplay playsinline></video>
 
     <div id="notification" class="notification"></div>
@@ -150,8 +149,7 @@
                     videoStream = await navigator.mediaDevices.getUserMedia(constraints);
                     cameraFeed.srcObject = videoStream;
                     cameraFeed.style.display = "block";
-                    toggleCameraButton.textContent = "📷";
-                    toggleCameraButton.style.backgroundColor = "#e0e0e0";
+                    toggleCameraButton.textContent = "Disattiva";
 
                     qrScanner = new QrScanner(
                         cameraFeed,
@@ -175,8 +173,7 @@
                     qrScanner = null;
                 }
                 cameraFeed.style.display = "none";
-                toggleCameraButton.textContent = "📷";
-                toggleCameraButton.style.backgroundColor = "white";
+                toggleCameraButton.textContent = "Scan QR-Code";
             }
 
             function handleScan(result) {
@@ -200,7 +197,6 @@
                 const now = new Date();
                 const guestItem = {
                     text: scannedText,
-                    date: now.toLocaleDateString(),
                     time: now.toLocaleTimeString()
                 };
 
@@ -228,7 +224,7 @@
                     guestItemElement.classList.add('guest');
                     guestItemElement.innerHTML = `
                         <div class="guest-info">
-                            <span class="guest-date">${guest.date}</span>
+                            <span class="guest-time">${guest.time}</span>
                             <span class="guest-text">${guest.text}</span>
                         </div>
                         <button class="delete-button" onclick="removeGuest(${index})">X</button>
