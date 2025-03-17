@@ -129,42 +129,82 @@
 
     <script>
         const toggleCameraButton = document.getElementById('toggleCameraButton');
-        const guestListContainer = document.getElementById('guestList');
+        const cameraFeed = document.getElementById('cameraFeed');
+        let videoStream = null;
+        let qrScanner = null;
         let guestList = JSON.parse(localStorage.getItem('guestList')) || [];
 
-        // Funzione per resettare la lista
-        document.getElementById('resetButton').addEventListener('click', function () {
-            if (confirm("Sei sicuro di cancellare tutti i dati?")) {
-                guestList = [];
-                localStorage.setItem('guestList', JSON.stringify(guestList));
-                updateGuestList();
+        toggleCameraButton.addEventListener('click', function () {
+            if (videoStream) {
+                stopCamera();
+            } else {
+                startCamera();
             }
         });
 
-        // Funzione per esportare la lista in Excel
-        document.getElementById('exportExcelButton').addEventListener('click', function () {
-            if (guestList.length === 0) {
-                alert("Nessun dato da esportare.");
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: { facingMode: "environment" }
+                };
+
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraFeed.srcObject = videoStream;
+                cameraFeed.style.display = "block";
+                toggleCameraButton.textContent = "Disattiva";
+
+                qrScanner = new QrScanner(
+                    cameraFeed,
+                    result => handleScan(result),
+                    { highlightScanRegion: true, highlightCodeOutline: true }
+                );
+                qrScanner.start();
+            } catch (error) {
+                alert("Errore nell'attivazione della fotocamera: " + error.message);
+            }
+        }
+
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            if (qrScanner) {
+                qrScanner.stop();
+                qrScanner.destroy();
+                qrScanner = null;
+            }
+            cameraFeed.style.display = "none";
+            toggleCameraButton.textContent = "Scan QR-Code";
+        }
+
+        function handleScan(result) {
+            let scannedText = result.data ? String(result.data).trim() : String(result).trim();
+            if (!scannedText) return;
+
+            stopCamera();
+            addScannedCode(scannedText);
+        }
+
+        function addScannedCode(scannedText) {
+            if (!scannedText) return;
+
+            const existingGuest = guestList.find(guest => guest.text === scannedText);
+            if (existingGuest) {
+                alert("⚠️ Tessera già registrata");
                 return;
             }
 
-            let ws = XLSX.utils.json_to_sheet(guestList);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Guests");
-            XLSX.writeFile(wb, "Report_Ospiti.xlsx");
-        });
+            const now = new Date();
+            const guestItem = {
+                text: scannedText,
+                time: now.toLocaleTimeString()
+            };
 
-        // Mostra tutti gli elementi
-        document.getElementById('showAllButton').addEventListener('click', function () {
+            guestList.unshift(guestItem);
+            localStorage.setItem('guestList', JSON.stringify(guestList));
             updateGuestList();
-        });
-
-        // Funzione di ricerca
-        document.getElementById('searchInput').addEventListener('input', function () {
-            let query = this.value.toLowerCase();
-            let filteredList = guestList.filter(guest => guest.text.toLowerCase().includes(query));
-            updateGuestList(filteredList);
-        });
+        }
 
         function updateGuestList(filteredData = guestList) {
             guestListContainer.innerHTML = '';
@@ -188,6 +228,32 @@
                 updateGuestList();
             }
         }
+
+        document.getElementById('resetButton').addEventListener('click', function () {
+            if (confirm("Sei sicuro di cancellare tutti i dati?")) {
+                guestList = [];
+                localStorage.setItem('guestList', JSON.stringify(guestList));
+                updateGuestList();
+            }
+        });
+
+        document.getElementById('exportExcelButton').addEventListener('click', function () {
+            if (guestList.length === 0) {
+                alert("Nessun dato da esportare.");
+                return;
+            }
+
+            let ws = XLSX.utils.json_to_sheet(guestList);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Guests");
+            XLSX.writeFile(wb, "Report_Ospiti.xlsx");
+        });
+
+        document.getElementById('searchInput').addEventListener('input', function () {
+            let query = this.value.toLowerCase();
+            let filteredList = guestList.filter(guest => guest.text.toLowerCase().includes(query));
+            updateGuestList(filteredList);
+        });
 
         updateGuestList();
     </script>
