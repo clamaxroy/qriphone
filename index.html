@@ -6,8 +6,8 @@
     <title>CONTROLLO QR-CODE</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    
-    <!-- 📌 Importazione della libreria -->
+
+    <!-- Importazione della libreria -->
     <script src="https://unpkg.com/qr-scanner@1.4.1/qr-scanner.umd.min.js"></script>
 
     <style>
@@ -24,7 +24,7 @@
             max-width: 400px;
             margin-top: 10px;
         }
-        #toggleCameraButton {
+        button {
             margin: 10px;
             padding: 10px;
             font-size: 16px;
@@ -42,6 +42,13 @@
             padding: 10px;
             display: none;
         }
+        #guestList div {
+            background: white;
+            color: black;
+            padding: 5px;
+            margin: 5px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -49,6 +56,7 @@
     <h2>Scansiona Tessere IKEA Family</h2>
 
     <button id="toggleCameraButton">Attiva Fotocamera</button>
+    <button id="clearListButton">Cancella Lista</button>
     <video id="cameraFeed" autoplay playsinline></video>
     
     <input type="text" id="scannedText" placeholder="Tessera IKEA" readonly>
@@ -58,13 +66,18 @@
     <!-- Debug per vedere se i QR vengono rilevati -->
     <div id="debug">DEBUG: Nessun QR rilevato</div>
 
+    <!-- Audio per il suono di conferma -->
+    <audio id="scanSound" src="https://www.myinstants.com/media/sounds/beep.mp3"></audio>
+
     <script>
         window.addEventListener('load', function () {
             const toggleCameraButton = document.getElementById('toggleCameraButton');
+            const clearListButton = document.getElementById('clearListButton');
             const cameraFeed = document.getElementById('cameraFeed');
             const scannedTextField = document.getElementById('scannedText');
             const guestListContainer = document.getElementById('guestList');
             const debugDiv = document.getElementById('debug');
+            const scanSound = document.getElementById('scanSound');
 
             let videoStream = null;
             let qrScanner = null;
@@ -76,6 +89,12 @@
                 } else {
                     startCamera();
                 }
+            });
+
+            clearListButton.addEventListener('click', function () {
+                guestList = [];
+                localStorage.removeItem('guestList');
+                updateGuestList();
             });
 
             async function startCamera() {
@@ -91,7 +110,6 @@
                     cameraFeed.style.display = "block";
                     toggleCameraButton.textContent = "Disattiva Fotocamera";
 
-                    // 🟢 Inizializza il lettore QR/Barcode
                     qrScanner = new QrScanner(
                         cameraFeed,
                         result => handleScan(result),
@@ -122,8 +140,8 @@
             }
 
             function handleScan(result) {
-    let scannedText = result.data ? String(result.data).trim() : String(result).trim();
-
+                let scannedText = result.data ? String(result.data).trim() : String(result).trim();
+                if (!scannedText) return;
 
                 stopCamera();  
                 scannedTextField.value = scannedText;
@@ -150,6 +168,7 @@
                 localStorage.setItem('guestList', JSON.stringify(guestList));
                 updateGuestList();
                 
+                scanSound.play(); // 🔊 Riproduce il suono di conferma
                 debugDiv.style.display = "block";
                 debugDiv.textContent = "✅ QR Code rilevato: " + scannedText;
                 alert("✅ Tessera registrata con successo!");
@@ -159,7 +178,6 @@
                 guestListContainer.innerHTML = '';
                 guestList.forEach(guest => {
                     const guestItemElement = document.createElement('div');
-                    guestItemElement.classList.add('guest');
                     guestItemElement.innerHTML = `
                         <span>${guest.time} - ${guest.text}</span>
                     `;
@@ -172,4 +190,3 @@
     </script>
 </body>
 </html>
-
