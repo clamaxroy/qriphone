@@ -6,7 +6,6 @@
     <title>CONTROLLO QR-CODE</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="manifest" href="/manifest.json">
     
     <!-- Libreria QR Scanner -->
     <script src="https://unpkg.com/qr-scanner@1.4.1/qr-scanner.min.js"></script>
@@ -17,10 +16,10 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            text-align: center;
             background-color: #105b90;
             color: #fedb02;
-            text-align: center;
+            padding: 20px;
         }
         #cameraFeed {
             display: none;
@@ -28,22 +27,8 @@
             max-width: 400px;
             margin-top: 10px;
         }
-        #guestList {
-            margin-top: 20px;
-        }
-        .guest {
-            margin: 5px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            background-color: white;
-            color: black;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
         #toggleCameraButton {
-            display: block;
-            margin: 10px auto;
+            margin: 10px;
             padding: 10px;
             font-size: 16px;
             cursor: pointer;
@@ -52,12 +37,13 @@
             border: 1px solid black;
             border-radius: 5px;
         }
-        .deleteButton {
-            background-color: red;
+        #debug {
+            margin-top: 20px;
+            font-size: 14px;
             color: white;
-            border: none;
-            padding: 5px;
-            cursor: pointer;
+            background-color: red;
+            padding: 10px;
+            display: none;
         }
     </style>
 </head>
@@ -66,10 +52,14 @@
     <h2>Scansiona Tessere IKEA Family</h2>
 
     <button id="toggleCameraButton">Attiva Fotocamera</button>
-    <video id="cameraFeed" autoplay></video>
-
+    <video id="cameraFeed" autoplay playsinline></video>
+    
     <input type="text" id="scannedText" placeholder="Tessera IKEA" readonly>
+    
     <div id="guestList"></div>
+
+    <!-- Debug per vedere se i QR vengono rilevati -->
+    <div id="debug">DEBUG: Nessun QR rilevato</div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -77,6 +67,7 @@
             const cameraFeed = document.getElementById('cameraFeed');
             const scannedTextField = document.getElementById('scannedText');
             const guestListContainer = document.getElementById('guestList');
+            const debugDiv = document.getElementById('debug');
 
             let videoStream = null;
             let qrScanner = null;
@@ -92,20 +83,27 @@
 
             async function startCamera() {
                 try {
-                    videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    const constraints = {
+                        video: {
+                            facingMode: { exact: "environment" } // Usa sempre la fotocamera posteriore
+                        }
+                    };
+
+                    videoStream = await navigator.mediaDevices.getUserMedia(constraints);
                     cameraFeed.srcObject = videoStream;
                     cameraFeed.style.display = "block";
                     toggleCameraButton.textContent = "Disattiva Fotocamera";
-                    alert("Fotocamera attivata: inquadra un QR code o codice a barre.");
-                    
+
+                    // Inizializza il lettore QR/Barcode
                     qrScanner = new QrScanner(
                         cameraFeed,
-                        result => {
-                            handleScan(result);
-                        },
+                        result => handleScan(result),
                         { highlightScanRegion: true, highlightCodeOutline: true }
                     );
                     qrScanner.start();
+
+                    debugDiv.style.display = "block";
+                    debugDiv.textContent = "DEBUG: Fotocamera attivata, in attesa di un QR code...";
                 } catch (error) {
                     alert("Errore nell'attivazione della fotocamera: " + error.message);
                 }
@@ -123,10 +121,11 @@
                 }
                 cameraFeed.style.display = "none";
                 toggleCameraButton.textContent = "Attiva Fotocamera";
+                debugDiv.style.display = "none";
             }
 
             function handleScan(scannedData) {
-                stopCamera();  // Disattiva la fotocamera dopo la lettura
+                stopCamera();  
                 scannedTextField.value = scannedData;
                 addScannedCode(scannedData);
             }
@@ -151,25 +150,20 @@
                 guestList.unshift(guestItem);
                 localStorage.setItem('guestList', JSON.stringify(guestList));
                 updateGuestList();
+                
+                debugDiv.style.display = "block";
+                debugDiv.textContent = "✅ QR Code rilevato: " + scannedText;
                 alert("✅ Tessera registrata con successo!");
             }
 
             function updateGuestList() {
                 guestListContainer.innerHTML = '';
-                guestList.slice(0, 50).forEach(guest => {
+                guestList.forEach(guest => {
                     const guestItemElement = document.createElement('div');
                     guestItemElement.classList.add('guest');
                     guestItemElement.innerHTML = `
                         <span>${guest.time} - ${guest.text}</span>
-                        <button class="deleteButton">❌</button>
                     `;
-
-                    guestItemElement.querySelector('.deleteButton').addEventListener('click', function () {
-                        guestList = guestList.filter(g => g.text !== guest.text);
-                        localStorage.setItem('guestList', JSON.stringify(guestList));
-                        updateGuestList();
-                    });
-
                     guestListContainer.appendChild(guestItemElement);
                 });
             }
