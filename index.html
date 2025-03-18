@@ -112,6 +112,13 @@
             align-items: center;
             margin-left: 10px;
         }
+        #guestCounter {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 10px;
+    color: white;
+}
+
     </style>
 </head>
 <body>
@@ -119,10 +126,11 @@
     <h2>Scansiona Tessere IKEA Family</h2>
 
     <button id="toggleCameraButton">Scan QR-Code</button>
-    <video id="cameraFeed" autoplay playsinline></video>
-    <button id="downloadReportButton">📥 Report</button>
-    <input type="text" id="searchInput" placeholder="Cerca nominativo...">
+    <p id="guestCounter">Ospiti unici: 0</p>
 
+    <video id="cameraFeed" autoplay playsinline></video>
+    <input type="text" id="searchInput" placeholder="Cerca nominativo...">
+<button id="downloadReportButton">📥 Report</button>
     <div id="notification" class="notification"></div>
     <div id="guestList"></div>
 
@@ -179,16 +187,21 @@
             }
 
             function updateGuestList() {
-                guestListContainer.innerHTML = guestList.map((guest, index) => `
-                    <div class="guest">
-                        <div class="guest-info">
-                            <span class="guest-time">${guest.time}</span>
-                            <span class="guest-text">${guest.text}</span>
-                        </div>
-                        <button class="delete-button" onclick="removeGuest(${index})">X</button>
-                    </div>
-                `).join('');
-            }
+    guestListContainer.innerHTML = guestList.map((guest, index) => `
+        <div class="guest">
+            <div class="guest-info">
+                <span class="guest-time">${guest.time}</span>
+                <span class="guest-text">${guest.text}</span>
+            </div>
+            <button class="delete-button" onclick="removeGuest(${index})">X</button>
+        </div>
+    `).join('');
+
+    // Aggiorna il contatore degli ospiti unici
+    const uniqueGuests = new Set(guestList.map(guest => guest.text)); // Rimuove duplicati
+    document.getElementById('guestCounter').textContent = `Ospiti unici: ${uniqueGuests.size}`;
+}
+
 
             window.removeGuest = function(index) {
                 if (confirm("Sei sicuro di eliminare?")) {
