@@ -156,35 +156,49 @@
             });
 
             async function startCamera() {
-                try {
-                    videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                    cameraFeed.srcObject = videoStream;
-                    cameraFeed.style.display = "block";
-                    toggleCameraButton.textContent = "Disattiva";
+    try {
+        const constraints = { video: { facingMode: "environment" } };
+        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+        cameraFeed.srcObject = videoStream;
+        cameraFeed.style.display = "block";
+        toggleCameraButton.textContent = "Disattiva";
 
-                    qrScanner = new QrScanner(cameraFeed, result => handleScan(result), {
-                        highlightScanRegion: true,
-                        highlightCodeOutline: true
-                    });
-                    qrScanner.start();
-                } catch (error) {
-                    alert("Errore nell'attivazione della fotocamera: " + error.message);
-                }
-            }
+        // Controlla se il QR scanner esiste già
+        if (!qrScanner) {
+            qrScanner = new QrScanner(cameraFeed, result => handleScan(result), {
+                highlightScanRegion: true,
+                highlightCodeOutline: true
+            });
+        }
 
-            function stopCamera() {
-                if (videoStream) {
-                    videoStream.getTracks().forEach(track => track.stop());
-                    videoStream = null;
-                }
-                if (qrScanner) {
-                    qrScanner.stop();
-                    qrScanner.destroy();
-                    qrScanner = null;
-                }
-                cameraFeed.style.display = "none";
-                toggleCameraButton.textContent = "Scan QR-Code";
-            }
+        qrScanner.start();
+    } catch (error) {
+        alert("Errore nell'attivazione della fotocamera: " + error.message);
+    }
+}
+
+function stopCamera() {
+    if (qrScanner) {
+        qrScanner.stop();
+    }
+    if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+    }
+    cameraFeed.style.display = "none";
+    toggleCameraButton.textContent = "Scan QR-Code";
+}
+
+function handleScan(result) {
+    let scannedText = result.data ? String(result.data).trim() : String(result).trim();
+    if (!scannedText) return;
+
+    // Stop della scansione dopo aver letto il codice
+    stopCamera();
+
+    addScannedCode(scannedText);
+}
+
 
             function updateGuestList() {
     guestListContainer.innerHTML = guestList.map((guest, index) => `
