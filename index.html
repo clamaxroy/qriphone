@@ -150,27 +150,26 @@
             const successSound = new Audio("https://static.wixstatic.com/mp3/2080b2_76667a9eefe946fda6bdfc5bc56988e1.mp3");
             const errorSound = new Audio("https://static.wixstatic.com/mp3/2080b2_519ca0fcc6764f71a29f6cefbeb9e0b3.mp3");
 
-            toggleCameraButton.addEventListener('click', function () {
-                if (videoStream) stopCamera();
-                else startCamera();
-            });
+toggleCameraButton.addEventListener('click', function () {
+    if (videoStream) stopCamera();
+    else startCamera();
+});
 
-            async function startCamera() {
+async function startCamera() {
     try {
-        const constraints = { video: { facingMode: "environment" } };
-        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         cameraFeed.srcObject = videoStream;
         cameraFeed.style.display = "block";
         toggleCameraButton.textContent = "Disattiva";
 
-        // Controlla se il QR scanner esiste già
+        // Se qrScanner non esiste, lo inizializziamo una sola volta
         if (!qrScanner) {
             qrScanner = new QrScanner(cameraFeed, result => handleScan(result), {
                 highlightScanRegion: true,
                 highlightCodeOutline: true
             });
         }
-
+        
         qrScanner.start();
     } catch (error) {
         alert("Errore nell'attivazione della fotocamera: " + error.message);
@@ -193,11 +192,29 @@ function handleScan(result) {
     let scannedText = result.data ? String(result.data).trim() : String(result).trim();
     if (!scannedText) return;
 
-    // Stop della scansione dopo aver letto il codice
-    stopCamera();
-
+    // Evitiamo di fermare la scansione immediatamente, così possiamo scansionare più codici
+    qrScanner.stop();
+    
     addScannedCode(scannedText);
 }
+
+function addScannedCode(scannedText) {
+    if (guestList.some(guest => guest.text === scannedText)) {
+        showNotification("⚠️ Tessera già registrata", scannedText, "error");
+        errorSound.play();
+        return;
+    }
+
+    const now = new Date();
+    guestList.unshift({ text: scannedText, time: now.toLocaleTimeString() });
+    
+    localStorage.setItem('guestList', JSON.stringify(guestList));
+    updateGuestList();
+
+    showNotification("✅ Tessera registrata con successo", scannedText, "success");
+    successSound.play();
+}
+
 
 
             function updateGuestList() {
