@@ -229,6 +229,11 @@ function addScannedCode(scannedText) {
     showNotification("✅ Accesso Consentito > ", scannedText, "success");
     successSound.play();
 }
+            // Fa vibrare il dispositivo per 1 secondo (se supportato)
+if (navigator.vibrate) {
+    navigator.vibrate(1000);
+}
+
 
 // Funzione per mostrare notifiche visive
 function showNotification(message, qrText, type) {
