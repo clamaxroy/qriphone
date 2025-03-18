@@ -214,16 +214,23 @@
             };
 
          downloadReportButton.addEventListener('click', function () {
+    const password = prompt("Inserisci la password per scaricare il report:");
+
+    if (password !== "2006") {
+        alert("❌ Password errata! Impossibile scaricare il report.");
+        return;
+    }
+
     if (guestList.length === 0) {
-        alert("Nessun dato disponibile per il report.");
+        alert("⚠️ Nessun dato disponibile per il report.");
         return;
     }
 
     const wb = XLSX.utils.book_new();
-    const wsData = [["Orario", "Nominativo"]]; // Cambiato "Data" in "Orario"
+    const wsData = [["Orario", "Nominativo"]];
 
     guestList.forEach(guest => {
-        wsData.push([guest.time, guest.text]); // Ora usa l'orario salvato
+        wsData.push([guest.time, guest.text]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -231,6 +238,7 @@
 
     XLSX.writeFile(wb, "Report_Ospiti.xlsx");
 });
+
 
 
             updateGuestList();
