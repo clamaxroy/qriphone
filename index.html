@@ -192,8 +192,8 @@ function handleScan(result) {
     let scannedText = result.data ? String(result.data).trim() : String(result).trim();
     if (!scannedText) return;
 
-    // Fermiamo temporaneamente la scansione per evitare doppie letture
-    qrScanner.stop();
+    // Chiude automaticamente la fotocamera dopo la scansione
+    stopCamera();
     
     addScannedCode(scannedText);
 }
