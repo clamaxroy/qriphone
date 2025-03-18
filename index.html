@@ -162,7 +162,7 @@ async function startCamera() {
         cameraFeed.style.display = "block";
         toggleCameraButton.textContent = "Disattiva";
 
-        // Se qrScanner non esiste, lo inizializziamo una sola volta
+        // Inizializza qrScanner solo se non è già stato creato
         if (!qrScanner) {
             qrScanner = new QrScanner(cameraFeed, result => handleScan(result), {
                 highlightScanRegion: true,
@@ -192,7 +192,7 @@ function handleScan(result) {
     let scannedText = result.data ? String(result.data).trim() : String(result).trim();
     if (!scannedText) return;
 
-    // Evitiamo di fermare la scansione immediatamente, così possiamo scansionare più codici
+    // Fermiamo temporaneamente la scansione per evitare doppie letture
     qrScanner.stop();
     
     addScannedCode(scannedText);
@@ -215,8 +215,16 @@ function addScannedCode(scannedText) {
     successSound.play();
 }
 
+// Funzione per mostrare notifiche visive
+function showNotification(message, qrText, type) {
+    notificationDiv.textContent = `${message}\n${qrText}`;
+    notificationDiv.className = `notification ${type}`;
+    notificationDiv.style.display = "block";
 
-
+    setTimeout(() => {
+        notificationDiv.style.display = "none";
+    }, 3000);
+}
             function updateGuestList() {
     guestListContainer.innerHTML = guestList.map((guest, index) => `
         <div class="guest">
