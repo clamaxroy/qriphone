@@ -309,6 +309,46 @@ searchInput.addEventListener('keydown', function (event) {
     }
 });
 
+// Modifica per nascondere la lista finché non si digita nel campo di ricerca
+guestListContainer.style.display = "none";
+
+searchInput.addEventListener('input', function () {
+    const searchText = searchInput.value.trim().toLowerCase();
+
+    if (searchText === "") {
+        guestListContainer.style.display = "none"; // Nasconde la lista se il campo è vuoto
+        return;
+    }
+
+    // Se viene digitata la parola "full", mostra tutta la lista
+    if (searchText === "full") {
+        guestListContainer.style.display = "block"; // Mostra la lista completa
+        updateGuestList(); // Ripristina tutta la lista
+        return;
+    }
+
+    // Mostra la lista filtrata
+    guestListContainer.style.display = "block";
+
+    let filteredGuests = guestList.filter(guest => guest.text.toLowerCase().includes(searchText));
+
+    guestListContainer.innerHTML = filteredGuests.map(guest => `
+        <div class="guest">
+            <div class="guest-info">
+                <span class="guest-time">${guest.time}</span>
+                <span class="guest-text">${guest.text}</span>
+            </div>
+        </div>
+    `).join('');
+});
+
+
+// Nasconde nuovamente la lista quando si cancella tutto il testo
+searchInput.addEventListener('blur', function () {
+    if (searchInput.value.trim() === "") {
+        guestListContainer.style.display = "none";
+    }
+});
 
 
 
