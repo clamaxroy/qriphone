@@ -227,11 +227,11 @@ function addScannedCode(scannedText) {
     updateGuestList();
 
     showNotification("✅ Accesso Consentito > ", scannedText, "success");
+     // Fa vibrare il dispositivo per 1 secondo (se supportato)
+    if (navigator.vibrate) {
+        navigator.vibrate(1000);
+    }
     successSound.play();
-}
-            // Fa vibrare il dispositivo per 1 secondo (se supportato)
-if (navigator.vibrate) {
-    navigator.vibrate(1000);
 }
 
 
