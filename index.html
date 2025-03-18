@@ -15,9 +15,9 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #105b90;
-            color: #fedb02;
-            padding: 20px;
+            background-color: #5f9ea0;
+            color: fedb02;
+            padding: 0px;
         }
         #toggleCameraButton, #downloadReportButton {
             margin: 10px auto;
@@ -33,7 +33,7 @@
             text-align: center;
         }
         #toggleCameraButton {
-            background-color: green;
+            background-color: #4169e1;
             color: white;
             height: 100px;
         }
@@ -113,17 +113,16 @@
             margin-left: 10px;
         }
         #guestCounter {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     margin-top: 10px;
-    color: white;
+    color: black;
 }
 
     </style>
 </head>
 <body>
-    <h1>IKEA - Fuori Salone</h1>
-    <h2>Scansiona Tessere IKEA Family</h2>
+    <h2>Accredito Ospiti</h2>
 
     <button id="toggleCameraButton">Scan QR-Code</button>
     <p id="guestCounter">Ospiti unici: 0</p>
@@ -238,7 +237,7 @@ function showNotification(message, qrText, type) {
 
     // Aggiorna il contatore degli ospiti unici
     const uniqueGuests = new Set(guestList.map(guest => guest.text)); // Rimuove duplicati
-    document.getElementById('guestCounter').textContent = `Ospiti unici: ${uniqueGuests.size}`;
+    document.getElementById('guestCounter').textContent = `Numero Ospiti: ${uniqueGuests.size}`;
 }
 
 
