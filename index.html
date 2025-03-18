@@ -7,8 +7,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-    <!-- Importazione della libreria -->
+    <!-- Importazione delle librerie -->
     <script src="https://unpkg.com/qr-scanner@1.4.1/qr-scanner.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         body {
@@ -18,21 +19,27 @@
             color: #fedb02;
             padding: 20px;
         }
-        #toggleCameraButton {
+        #toggleCameraButton, #downloadReportButton {
             margin: 10px auto;
-            padding: 0;
             font-size: 14px;
             cursor: pointer;
-            background-color: green;
-            color: white;
             border: none;
             border-radius: 25px;
             width: 130px;
-            height: 100px;
+            height: 40px;
             display: flex;
             justify-content: center;
             align-items: center;
             text-align: center;
+        }
+        #toggleCameraButton {
+            background-color: green;
+            color: white;
+            height: 100px;
+        }
+        #downloadReportButton {
+            background-color: #fedb02;
+            color: black;
         }
         #cameraFeed {
             display: none;
@@ -50,13 +57,8 @@
             max-width: 80%;
             text-align: center;
         }
-        .success {
-            background-color: green;
-        }
-        .error {
-            background-color: red;
-        }
-        /* Stile per la lista ospiti */
+        .success { background-color: green; }
+        .error { background-color: red; }
         #guestList {
             background-color: white;
             color: black;
@@ -65,7 +67,6 @@
             max-width: 400px;
             border-radius: 5px;
             border: 1px solid #ccc;
-            display: block;
             text-align: left;
         }
         .guest {
@@ -76,15 +77,7 @@
             border-bottom: 1px solid #ddd;
             font-size: 14px;
         }
-        .guest:last-child {
-            border-bottom: none;
-        }
-        .guest-info {
-            display: flex;
-            align-items: center;
-            flex: 1;
-            text-align: left;
-        }
+        .guest:last-child { border-bottom: none; }
         .guest-time {
             font-weight: bold;
             font-size: 12px;
@@ -92,9 +85,7 @@
             margin-right: 10px;
             min-width: 80px;
         }
-        .guest-text {
-            font-size: 14px;
-        }
+        .guest-text { font-size: 14px; }
         .delete-button {
             background-color: red;
             color: white;
@@ -116,9 +107,9 @@
 
     <button id="toggleCameraButton">Scan QR-Code</button>
     <video id="cameraFeed" autoplay playsinline></video>
+    <button id="downloadReportButton">📥 Report</button>
 
     <div id="notification" class="notification"></div>
-
     <div id="guestList"></div>
 
     <script>
@@ -127,6 +118,7 @@
             const cameraFeed = document.getElementById('cameraFeed');
             const notificationDiv = document.getElementById('notification');
             const guestListContainer = document.getElementById('guestList');
+            const downloadReportButton = document.getElementById('downloadReportButton');
 
             let videoStream = null;
             let qrScanner = null;
@@ -136,29 +128,21 @@
             const errorSound = new Audio("https://static.wixstatic.com/mp3/2080b2_519ca0fcc6764f71a29f6cefbeb9e0b3.mp3");
 
             toggleCameraButton.addEventListener('click', function () {
-                if (videoStream) {
-                    stopCamera();
-                } else {
-                    startCamera();
-                }
+                if (videoStream) stopCamera();
+                else startCamera();
             });
 
             async function startCamera() {
                 try {
-                    const constraints = {
-                        video: { facingMode: "environment" }
-                    };
-
-                    videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                     cameraFeed.srcObject = videoStream;
                     cameraFeed.style.display = "block";
                     toggleCameraButton.textContent = "Disattiva";
 
-                    qrScanner = new QrScanner(
-                        cameraFeed,
-                        result => handleScan(result),
-                        { highlightScanRegion: true, highlightCodeOutline: true }
-                    );
+                    qrScanner = new QrScanner(cameraFeed, result => handleScan(result), {
+                        highlightScanRegion: true,
+                        highlightCodeOutline: true
+                    });
                     qrScanner.start();
                 } catch (error) {
                     alert("Errore nell'attivazione della fotocamera: " + error.message);
@@ -188,22 +172,13 @@
             }
 
             function addScannedCode(scannedText) {
-                if (!scannedText) return;
-
-                const existingGuest = guestList.find(guest => guest.text === scannedText);
-                if (existingGuest) {
+                if (guestList.some(guest => guest.text === scannedText)) {
                     showNotification("⚠️ Tessera già registrata", scannedText, "error");
                     errorSound.play();
                     return;
                 }
 
-                const now = new Date();
-                const guestItem = {
-                    text: scannedText,
-                    time: now.toLocaleTimeString()
-                };
-
-                guestList.unshift(guestItem);
+                guestList.unshift({ text: scannedText, time: new Date().toLocaleTimeString() });
                 localStorage.setItem('guestList', JSON.stringify(guestList));
                 updateGuestList();
 
@@ -215,25 +190,19 @@
                 notificationDiv.textContent = `${message}\n${qrText}`;
                 notificationDiv.className = `notification ${type}`;
                 notificationDiv.style.display = "block";
-                setTimeout(() => {
-                    notificationDiv.style.display = "none";
-                }, 3000);
+                setTimeout(() => notificationDiv.style.display = "none", 3000);
             }
 
             function updateGuestList() {
-                guestListContainer.innerHTML = '';
-                guestList.forEach((guest, index) => {
-                    const guestItemElement = document.createElement('div');
-                    guestItemElement.classList.add('guest');
-                    guestItemElement.innerHTML = `
+                guestListContainer.innerHTML = guestList.map((guest, index) => `
+                    <div class="guest">
                         <div class="guest-info">
                             <span class="guest-time">${guest.time}</span>
                             <span class="guest-text">${guest.text}</span>
                         </div>
                         <button class="delete-button" onclick="removeGuest(${index})">X</button>
-                    `;
-                    guestListContainer.appendChild(guestItemElement);
-                });
+                    </div>
+                `).join('');
             }
 
             window.removeGuest = function(index) {
@@ -243,6 +212,26 @@
                     updateGuestList();
                 }
             };
+
+         downloadReportButton.addEventListener('click', function () {
+    if (guestList.length === 0) {
+        alert("Nessun dato disponibile per il report.");
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const wsData = [["Orario", "Nominativo"]]; // Cambiato "Data" in "Orario"
+
+    guestList.forEach(guest => {
+        wsData.push([guest.time, guest.text]); // Ora usa l'orario salvato
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, "Ospiti");
+
+    XLSX.writeFile(wb, "Report_Ospiti.xlsx");
+});
+
 
             updateGuestList();
         });
