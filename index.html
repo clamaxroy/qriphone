@@ -41,6 +41,18 @@
             background-color: #fedb02;
             color: black;
         }
+        #searchInput {
+            margin-left: 10px;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 180px;
+        }
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+        }
         #cameraFeed {
             display: none;
             width: 100%;
@@ -87,20 +99,19 @@
         }
         .guest-text { font-size: 14px; }
         .delete-button {
-    background-color: red;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    font-size: 16px; /* Aumentato leggermente per migliorare la leggibilità */
-    cursor: pointer;
-    display: flex; /* Usa Flexbox per centrare */
-    justify-content: center;
-    align-items: center;
-    margin-left: 10px;
-}
-
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -110,6 +121,7 @@
     <button id="toggleCameraButton">Scan QR-Code</button>
     <video id="cameraFeed" autoplay playsinline></video>
     <button id="downloadReportButton">📥 Report</button>
+    <input type="text" id="searchInput" placeholder="Cerca nominativo...">
 
     <div id="notification" class="notification"></div>
     <div id="guestList"></div>
@@ -121,6 +133,7 @@
             const notificationDiv = document.getElementById('notification');
             const guestListContainer = document.getElementById('guestList');
             const downloadReportButton = document.getElementById('downloadReportButton');
+            const searchInput = document.getElementById('searchInput');
 
             let videoStream = null;
             let qrScanner = null;
@@ -165,36 +178,6 @@
                 toggleCameraButton.textContent = "Scan QR-Code";
             }
 
-            function handleScan(result) {
-                let scannedText = result.data ? String(result.data).trim() : String(result).trim();
-                if (!scannedText) return;
-
-                stopCamera();  
-                addScannedCode(scannedText);
-            }
-
-            function addScannedCode(scannedText) {
-                if (guestList.some(guest => guest.text === scannedText)) {
-                    showNotification("⚠️ Tessera già registrata", scannedText, "error");
-                    errorSound.play();
-                    return;
-                }
-
-                guestList.unshift({ text: scannedText, time: new Date().toLocaleTimeString() });
-                localStorage.setItem('guestList', JSON.stringify(guestList));
-                updateGuestList();
-
-                showNotification("✅ Tessera registrata con successo", scannedText, "success");
-                successSound.play();
-            }
-
-            function showNotification(message, qrText, type) {
-                notificationDiv.textContent = `${message}\n${qrText}`;
-                notificationDiv.className = `notification ${type}`;
-                notificationDiv.style.display = "block";
-                setTimeout(() => notificationDiv.style.display = "none", 3000);
-            }
-
             function updateGuestList() {
                 guestListContainer.innerHTML = guestList.map((guest, index) => `
                     <div class="guest">
@@ -215,31 +198,64 @@
                 }
             };
 
-         downloadReportButton.addEventListener('click', function () {
-    const password = prompt("Inserisci la password per scaricare il report:");
+            downloadReportButton.addEventListener('click', function () {
+                if (prompt("Inserisci la password per scaricare il report:") !== "2006") {
+                    alert("❌ Password errata!");
+                    return;
+                }
 
-    if (password !== "2006") {
-        alert("❌ Password errata! Impossibile scaricare il report.");
+                if (guestList.length === 0) {
+                    alert("⚠️ Nessun dato disponibile per il report.");
+                    return;
+                }
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(
+                    [["Orario", "Nominativo"], ...guestList.map(g => [g.time, g.text])]
+                ), "Ospiti");
+
+                XLSX.writeFile(wb, "Report_Ospiti.xlsx");
+            });
+
+            searchInput.addEventListener('input', function () {
+    const searchText = searchInput.value.trim().toLowerCase();
+    
+    if (searchText === "") {
+        guestList.sort((a, b) => new Date(`1970/01/01 ${b.time}`) - new Date(`1970/01/01 ${a.time}`)); // Ripristina ordine per orario
+        updateGuestList(); // Aggiorna la lista
         return;
     }
 
-    if (guestList.length === 0) {
-        alert("⚠️ Nessun dato disponibile per il report.");
-        return;
+    let filteredGuests = guestList.filter(guest => guest.text.toLowerCase().includes(searchText));
+
+    if (filteredGuests.length > 0) {
+        guestList = [...filteredGuests, ...guestList.filter(guest => !guest.text.toLowerCase().includes(searchText))]; // Sposta i risultati in alto
     }
 
-    const wb = XLSX.utils.book_new();
-    const wsData = [["Orario", "Nominativo"]];
+    updateGuestList(); // Aggiorna la lista con il nuovo ordine
 
-    guestList.forEach(guest => {
-        wsData.push([guest.time, guest.text]);
+    // Evidenzia i risultati trovati
+    document.querySelectorAll('.guest-text').forEach(guestText => {
+        if (guestText.textContent.toLowerCase().includes(searchText)) {
+            guestText.classList.add('highlight');
+        } else {
+            guestText.classList.remove('highlight');
+        }
     });
-
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, "Ospiti");
-
-    XLSX.writeFile(wb, "Report_Ospiti.xlsx");
 });
+
+// Mostra alert solo se non trova nulla e l'utente preme Invio
+searchInput.addEventListener('keydown', function (event) {
+    if (event.key === "Enter") {
+        const searchText = searchInput.value.trim().toLowerCase();
+        let found = guestList.some(guest => guest.text.toLowerCase().includes(searchText));
+
+        if (!found && searchText !== "") {
+            alert("❌ Nominativo non trovato!");
+        }
+    }
+});
+
 
 
 
