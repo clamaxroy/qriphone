@@ -120,6 +120,20 @@
     margin-top: 10px;
     color: black;
 }
+#logoContainer {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+#logo {
+    width: 50px; /* Regola la dimensione del logo */
+    height: auto;
+    opacity: 0.7; /* Leggera trasparenza */
+}
+
 
     </style>
 </head>
@@ -355,5 +369,9 @@ searchInput.addEventListener('blur', function () {
             updateGuestList();
         });
     </script>
+    <div id="logoContainer">
+    <img src="https://static.wixstatic.com/media/2080b2_282cfb00719f4ef996c39db8121ebe43~mv2.png" alt="Logo" id="logo">
+</div>
+
 </body>
 </html>
