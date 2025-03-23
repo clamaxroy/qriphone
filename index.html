@@ -16,7 +16,7 @@
             font-family: Arial, sans-serif;
             text-align: center;
             background-color: #124578;
-            color: fedb02;
+            color: #DCDCDC;
             padding: 0px;
         }
         #toggleCameraButton, #downloadReportButton {
@@ -33,14 +33,14 @@
             text-align: center;
         }
         #toggleCameraButton {
-            background-color: #90ee90;
+            background-color: #32CD32;
             color: black;
             height: 100px;
             width: 160px;
             border: 3px solid #696969;
         }
         #downloadReportButton {
-            background-color: #fedb02;
+            background-color: #edb02;
             color: black;
         }
         #searchInput {
@@ -118,7 +118,7 @@
     font-size: 16px;
     font-weight: bold;
     margin-top: 10px;
-    color: black;
+    color: white;
 }
 #logoContainer {
     position: fixed;
@@ -138,7 +138,7 @@
     </style>
 </head>
 <body>
-    <h2>Accredito Ospiti</h2>
+    <h2>CONTROLLO ACCESSI</h2>
 
     <button id="toggleCameraButton">Scan QR-Code</button>
     <p id="guestCounter">Ospiti unici: 0</p>
@@ -258,7 +258,7 @@ function showNotification(message, qrText, type) {
 
     // Aggiorna il contatore degli ospiti unici
     const uniqueGuests = new Set(guestList.map(guest => guest.text)); // Rimuove duplicati
-    document.getElementById('guestCounter').textContent = `Numero Ospiti: ${uniqueGuests.size}`;
+    document.getElementById('guestCounter').textContent = `Ingressi: ${uniqueGuests.size}`;
 }
 
 
